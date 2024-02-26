@@ -113,6 +113,7 @@ func main() {
 
 	// run once a month
 	n = utc().AddDate(0, 0, 3)
+	// n = utc().AddDate(0, 0, -7)
 	job5 := NewJob(4, Template1.ID, ScheduleTypeMonthly, &n)
 
 	jobs := []Job{job1, job2, job3, job4, job5}
@@ -188,18 +189,29 @@ func CalculateNextWeekly(start time.Time, curr time.Time) time.Time {
 }
 
 func CalculateNextMonthly(start time.Time, curr time.Time) time.Time {
-	nextMonth := curr.AddDate(0, 1, 0)
-	daysInMonth := DaysIn(nextMonth.Month(), nextMonth.Year())
-	startDay := start.Day()
+	next := start
+	for next.Before(curr) {
+		next = next.AddDate(0, 1, 0)
+	}
+
+	var nextYearAndMonth time.Time
+	if start.Day() < curr.Day() {
+		nextYearAndMonth = curr.AddDate(0, 1, 0)
+	} else {
+		nextYearAndMonth = curr
+	}
+
+	daysInMonth := DaysIn(nextYearAndMonth.Month(), nextYearAndMonth.Year())
 	var nextDay int
-	if startDay > daysInMonth {
+	if start.Day() > daysInMonth {
 		nextDay = daysInMonth
 	} else {
-		nextDay = startDay
+		nextDay = start.Day()
 	}
-	next := time.Date(
-		nextMonth.Year(),
-		nextMonth.Month(),
+
+	return time.Date(
+		nextYearAndMonth.Year(),
+		nextYearAndMonth.Month(),
 		nextDay,
 		start.Hour(),
 		start.Minute(),
@@ -207,7 +219,6 @@ func CalculateNextMonthly(start time.Time, curr time.Time) time.Time {
 		start.Nanosecond(),
 		start.Location(),
 	)
-	return next
 }
 
 func DaysIn(m time.Month, year int) int {

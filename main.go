@@ -100,21 +100,22 @@ func main() {
 	job1 := NewJob(0, Template1.ID, ScheduleTypeNow, nil)
 
 	// run once
-	n := utc().Add(time.Second * 10)
-	job2 := NewJob(1, Template1.ID, ScheduleTypeOnce, &n)
+	n1 := utc().Add(time.Second * 10)
+	job2 := NewJob(1, Template1.ID, ScheduleTypeOnce, &n1)
 
 	// run daily
-	n = utc().Add(time.Second * 10)
-	job3 := NewJob(2, Template1.ID, ScheduleTypeDaily, &n)
+	// n2 := utc().Add(time.Second * -10)
+	n2 := utc().Add(time.Second * 10)
+	job3 := NewJob(2, Template1.ID, ScheduleTypeDaily, &n2)
 
 	// run once a week
-	n = utc().Add(time.Second * 10)
-	job4 := NewJob(3, Template1.ID, ScheduleTypeWeekly, &n)
+	n3 := utc().Add(time.Second * 10)
+	job4 := NewJob(3, Template1.ID, ScheduleTypeWeekly, &n3)
 
 	// run once a month
-	n = utc().AddDate(0, 0, 3)
-	// n = utc().AddDate(0, 0, -7)
-	job5 := NewJob(4, Template1.ID, ScheduleTypeMonthly, &n)
+	n4 := utc().AddDate(0, 0, 3)
+	// n4 := utc().AddDate(0, 0, -7)
+	job5 := NewJob(4, Template1.ID, ScheduleTypeMonthly, &n4)
 
 	jobs := []Job{job1, job2, job3, job4, job5}
 
@@ -167,16 +168,10 @@ func main() {
 }
 
 func CalculateNextDaily(start time.Time, curr time.Time) time.Time {
-	next := time.Date(
-		curr.Year(),
-		curr.Month(),
-		curr.Day()+1,
-		start.Hour(),
-		start.Minute(),
-		start.Second(),
-		start.Nanosecond(),
-		start.Location(),
-	)
+	next := start
+	for next.Before(curr) {
+		next = next.AddDate(0, 0, 1)
+	}
 	return next
 }
 

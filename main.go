@@ -137,7 +137,7 @@ func main() {
 					if job.Done {
 						continue
 					}
-					fmt.Printf("job id = %d, marker = %s\n", job.ID, job.Marker)
+					fmt.Printf("job id = %d, type = %s, marker = %s\n", job.ID, job.Schedule, job.Marker)
 					ready, next := job.ReadyAndNext(now)
 					fmt.Printf("ready = %v, next = %s\n", ready, next)
 					if ready {
@@ -180,17 +180,10 @@ func CalculateNextDaily(start time.Time, curr time.Time) time.Time {
 }
 
 func CalculateNextWeekly(start time.Time, curr time.Time) time.Time {
-	currPlusOneWeek := curr.AddDate(0, 0, 7)
-	next := time.Date(
-		currPlusOneWeek.Year(),
-		currPlusOneWeek.Month(),
-		currPlusOneWeek.Day(),
-		start.Hour(),
-		start.Minute(),
-		start.Second(),
-		start.Nanosecond(),
-		start.Location(),
-	)
+	next := start
+	for next.Before(curr) {
+		next = next.AddDate(0, 0, 7)
+	}
 	return next
 }
 

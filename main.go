@@ -12,7 +12,7 @@ import (
 
 var (
 	ScheduleTypeNow                       = "NOW"
-	ScheduleTypeOneTime                   = "ONE_TIME"
+	ScheduleTypeOnce                      = "ONCE"
 	ScheduleTypeDaily                     = "DAILY"
 	ScheduleTypeWeekly                    = "WEEKLY"
 	ScheduleTypeMonthly                   = "MONTHLY"
@@ -67,7 +67,7 @@ func (j *Job) ReadyAndNext() (bool, *time.Time) {
 	switch j.Schedule {
 	case ScheduleTypeNow:
 		return true, nil
-	case ScheduleTypeOneTime:
+	case ScheduleTypeOnce:
 		return j.Marker.Before(now), nil
 	case ScheduleTypeDaily:
 		next := CalculateNextDaily(*j.Marker, *j.Next)
@@ -99,7 +99,7 @@ func main() {
 
 	// run once
 	n := time.Now().Add(time.Second * 10)
-	job2 := NewJob(1, Template1.ID, ScheduleTypeOneTime, &n)
+	job2 := NewJob(1, Template1.ID, ScheduleTypeOnce, &n)
 
 	jobs := []Job{job1, job2}
 

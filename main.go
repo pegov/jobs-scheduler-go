@@ -11,14 +11,13 @@ import (
 )
 
 var (
-	ScheduleTypeNow                       = "NOW"
-	ScheduleTypeOnce                      = "ONCE"
-	ScheduleTypeDaily                     = "DAILY"
-	ScheduleTypeWeekly                    = "WEEKLY"
-	ScheduleTypeMonthly                   = "MONTHLY"
-	ScheduleTypeSpecificDaysPerWeek       = "SPECIFIC_DAYS_PER_WEEK"      // TODO
-	ScheduleTypeSpecificDaysPerMonth      = "SPECIFIC_DAYS_PER_MONTH"     // TODO
-	ScheduleTypeSpecificDaysIndependently = "SPECIFIC_DAYS_INDEPENDENTLY" // TODO
+	ScheduleTypeNow         = "NOW"
+	ScheduleTypeOnce        = "ONCE"
+	ScheduleTypeDaily       = "DAILY"
+	ScheduleTypeWeekly      = "WEEKLY"
+	ScheduleTypeMonthly     = "MONTHLY"
+	ScheduleTypeWeeklyMany  = "WEEKLY_MANY"  // TODO
+	ScheduleTypeMonthlyMany = "MONTHLY_MANY" // TODO
 )
 
 type Template struct {

@@ -69,15 +69,15 @@ func (j *Job) ReadyAndNext(now time.Time) (bool, *time.Time) {
 	case ScheduleTypeOnce:
 		return j.Marker.Before(now), nil
 	case ScheduleTypeDaily:
-		next := CalculateNextDaily(*j.Marker, now)
+		next := CalculateNextDaily(*j.Next, now)
 		fmt.Printf("COMPARING: %s with %s\n", j.Next, now)
 		return j.Next.Before(now), &next
 	case ScheduleTypeWeekly:
-		next := CalculateNextWeekly(*j.Marker, now)
+		next := CalculateNextWeekly(*j.Next, now)
 		fmt.Printf("COMPARING: %s with %s\n", j.Next, now)
 		return j.Next.Before(now), &next
 	case ScheduleTypeMonthly:
-		next := CalculateNextMonthly(*j.Marker, now)
+		next := CalculateNextMonthly(*j.Next, now, *j.Marker)
 		fmt.Printf("COMPARING: %s with %s\n", j.Next, now)
 		return j.Next.Before(now), &next
 	default:
@@ -96,6 +96,21 @@ func (j *Job) RunScan(results chan<- int) {
 }
 
 func main() {
+	// t1 := utc().AddDate(0, 2, 4)
+	// fmt.Printf("TEST NEXT DATE: %s\n", t1)
+
+	// t2 := utc().AddDate(0, 3, 5)
+	// fmt.Printf("TEST CURR DATE: %s\n", t2)
+
+	// next := t1
+	// for next.Before(t2) {
+	// 	next = next.AddDate(0, 1, 0)
+	// }
+
+	// fmt.Printf("TEST NEXT2 DATE: %s\n", next)
+
+	// ---------------
+
 	// run right now
 	job1 := NewJob(0, Template1.ID, ScheduleTypeNow, nil)
 
@@ -126,7 +141,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan struct{}, 1)
 	results := make(chan int)
-	now := utc().AddDate(0, 0, 57)
+	now := utc().AddDate(0, 0, 63).Add(time.Second * -1)
 	fmt.Printf("NOW = %s\n", now)
 	go func() {
 		for {
@@ -183,37 +198,30 @@ func CalculateNextWeekly(start time.Time, curr time.Time) time.Time {
 	return next
 }
 
-func CalculateNextMonthly(start time.Time, curr time.Time) time.Time {
+func CalculateNextMonthly(start time.Time, curr time.Time, marker time.Time) time.Time {
+	var nextDay int
+
 	next := start
 	for next.Before(curr) {
 		next = next.AddDate(0, 1, 0)
+		daysInMonth := DaysIn(next.Month(), next.Year())
+		if daysInMonth >= marker.Day() {
+			nextDay = marker.Day()
+		} else {
+			nextDay = daysInMonth
+		}
+		next = time.Date(
+			next.Year(),
+			next.Month(),
+			nextDay,
+			start.Hour(),
+			start.Minute(),
+			start.Second(),
+			start.Nanosecond(),
+			start.Location(),
+		)
 	}
-
-	var nextYearAndMonth time.Time
-	if start.Day() < curr.Day() {
-		nextYearAndMonth = curr.AddDate(0, 1, 0)
-	} else {
-		nextYearAndMonth = curr
-	}
-
-	daysInMonth := DaysIn(nextYearAndMonth.Month(), nextYearAndMonth.Year())
-	var nextDay int
-	if start.Day() > daysInMonth {
-		nextDay = daysInMonth
-	} else {
-		nextDay = start.Day()
-	}
-
-	return time.Date(
-		nextYearAndMonth.Year(),
-		nextYearAndMonth.Month(),
-		nextDay,
-		start.Hour(),
-		start.Minute(),
-		start.Second(),
-		start.Nanosecond(),
-		start.Location(),
-	)
+	return next
 }
 
 func DaysIn(m time.Month, year int) int {

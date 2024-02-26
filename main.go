@@ -62,21 +62,23 @@ func NewJob(id int, templateID int, schedule string, marker *time.Time) Job {
 	}
 }
 
-func (j *Job) ReadyAndNext() (bool, *time.Time) {
-	now := time.Now().UTC()
+func (j *Job) ReadyAndNext(now time.Time) (bool, *time.Time) {
 	switch j.Schedule {
 	case ScheduleTypeNow:
 		return true, nil
 	case ScheduleTypeOnce:
 		return j.Marker.Before(now), nil
 	case ScheduleTypeDaily:
-		next := CalculateNextDaily(*j.Marker, *j.Next)
+		next := CalculateNextDaily(*j.Marker, now)
+		fmt.Printf("COMPARING: %s with %s\n", j.Next, now)
 		return j.Next.Before(now), &next
 	case ScheduleTypeWeekly:
-		next := CalculateNextWeekly(*j.Marker, *j.Next)
+		next := CalculateNextWeekly(*j.Marker, now)
+		fmt.Printf("COMPARING: %s with %s\n", j.Next, now)
 		return j.Next.Before(now), &next
 	case ScheduleTypeMonthly:
-		next := CalculateNextMonthly(*j.Marker, *j.Next)
+		next := CalculateNextMonthly(*j.Marker, now)
+		fmt.Printf("COMPARING: %s with %s\n", j.Next, now)
 		return j.Next.Before(now), &next
 	default:
 		return false, nil
@@ -87,7 +89,7 @@ func (j *Job) RunScan(results chan<- int) {
 	time.Sleep(time.Second * 5)
 	fmt.Println("finish scan")
 	j.Running = false
-	now := time.Now().UTC()
+	now := utc()
 	j.LastEnd = &now
 	fmt.Println("writing result")
 	fmt.Printf("%+v", j)
@@ -98,10 +100,22 @@ func main() {
 	job1 := NewJob(0, Template1.ID, ScheduleTypeNow, nil)
 
 	// run once
-	n := time.Now().Add(time.Second * 10)
+	n := utc().Add(time.Second * 10)
 	job2 := NewJob(1, Template1.ID, ScheduleTypeOnce, &n)
 
-	jobs := []Job{job1, job2}
+	// run daily
+	n = utc().Add(time.Second * 10)
+	job3 := NewJob(2, Template1.ID, ScheduleTypeDaily, &n)
+
+	// run once a week
+	n = utc().Add(time.Second * 10)
+	job4 := NewJob(3, Template1.ID, ScheduleTypeWeekly, &n)
+
+	// run once a month
+	n = utc().AddDate(0, 0, 3)
+	job5 := NewJob(4, Template1.ID, ScheduleTypeMonthly, &n)
+
+	jobs := []Job{job1, job2, job3, job4, job5}
 
 	// ---------------
 
@@ -110,6 +124,8 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan struct{}, 1)
 	results := make(chan int)
+	now := utc().AddDate(0, 0, 57)
+	fmt.Printf("NOW = %s\n", now)
 	go func() {
 		for {
 			select {
@@ -122,7 +138,8 @@ func main() {
 						continue
 					}
 					fmt.Printf("job id = %d, marker = %s\n", job.ID, job.Marker)
-					ready, next := job.ReadyAndNext()
+					ready, next := job.ReadyAndNext(now)
+					fmt.Printf("ready = %v, next = %s\n", ready, next)
 					if ready {
 						if next != nil {
 							fmt.Println("writing next")
@@ -152,7 +169,7 @@ func CalculateNextDaily(start time.Time, curr time.Time) time.Time {
 	next := time.Date(
 		curr.Year(),
 		curr.Month(),
-		curr.Day(),
+		curr.Day()+1,
 		start.Hour(),
 		start.Minute(),
 		start.Second(),
@@ -221,4 +238,8 @@ func ClearTerminal() {
 	default:
 		runCmd("clear")
 	}
+}
+
+func utc() time.Time {
+	return time.Now().UTC()
 }
